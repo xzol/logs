@@ -1,16 +1,53 @@
 package logs
 
 import (
-	"context"
 	"os"
 	"time"
 
 	"github.com/sirupsen/logrus"
 )
 
-const LOG_TO_FILE = "logToFile"
-const LOG_TO_STD_OUT = "logToStdOut"
+//const LOG_TO_FILE = "logToFile"
+//const LOG_TO_STD_OUT = "logToStdOut"
 
+type LogToFileS struct {
+	Logger     *logrus.Logger
+	openedFile *os.File
+}
+
+//Логирование в файл
+func LogToFile() *LogToFileS {
+	var err error
+	logToFile := new(LogToFileS)
+	logToFile.Logger = logrus.New()
+
+	timeNow := time.Now()
+	//дата в данный момент.
+	dateNow := timeNow.Format("2006-01-02")
+	var pathFileLog = "logs/" + dateNow + ".log"
+
+	logToFile.Logger.SetFormatter(&logrus.JSONFormatter{})
+
+	logToFile.openedFile, err = os.OpenFile(pathFileLog, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+	if err != nil {
+		logToStd := LogToStd()
+		logToStd.Fatalln(err)
+	}
+	logToFile.Logger.SetOutput(logToFile.openedFile)
+	return logToFile
+}
+
+func (l *LogToFileS) Close() {
+	l.openedFile.Close()
+}
+
+func LogToStd() *logrus.Logger {
+	logToStd := logrus.New()
+	logToStd.SetOutput(os.Stdout)
+	return logToStd
+}
+
+/**
 //Лог файл
 var LogToFile *logrus.Logger
 
@@ -22,7 +59,7 @@ func cyclLogFile(fileLogOpenedChannel chan bool) {
 	var dateLogFile string
 
 	for {
-		time.Sleep(1 * time.Second)
+		var	time.Sleep(1 * time.Second)
 		timeNow := time.Now()
 		//дата в данный момент.
 		dateNow := timeNow.Format("2006-01-02")
@@ -87,3 +124,4 @@ func GetLogFromCtx(ctx context.Context, key string) *logrus.Logger {
 	}
 
 }
+**/
